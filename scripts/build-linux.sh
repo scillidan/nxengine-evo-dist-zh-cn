@@ -16,15 +16,19 @@ git clone --depth=1 "$NXENGINE_REPO" nxengine-evo
 cd nxengine-evo
 
 echo "=== Building NXEngine-evo (Linux ${ARCH}) ==="
-cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPORTABLE=ON \
-	-DCMAKE_INSTALL_PREFIX=/usr -Bbuild -H.
+cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPORTABLE=ON -Bbuild -H.
 ninja -C build
 
 echo "=== Assembling AppDir ==="
 rm -rf AppDir
-DESTDIR=AppDir ninja -C build install
-rm -rf AppDir/usr/share/nxengine/data
+mkdir -p AppDir/usr/bin AppDir/usr/share/applications \
+	AppDir/usr/share/icons/hicolor/256x256/apps AppDir/usr/share/metainfo
+cp build/nxengine-evo build/nxextract AppDir/usr/bin/
 cp -r "$REPO_DIR/$DATA_DIR" AppDir/usr/bin/data
+cp platform/xdg/org.nxengine.nxengine_evo.desktop AppDir/usr/share/applications/
+cp platform/xdg/org.nxengine.nxengine_evo.png AppDir/usr/share/icons/hicolor/256x256/apps/
+cp platform/xdg/org.nxengine.nxengine_evo.appdata.xml AppDir/usr/share/metainfo/
+chmod +x AppDir/usr/bin/nxengine-evo AppDir/usr/bin/nxextract
 
 echo "=== Building AppImage (${ARCH}) ==="
 export APPIMAGE_EXTRACT_AND_RUN=1

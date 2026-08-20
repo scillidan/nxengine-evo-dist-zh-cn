@@ -16,20 +16,32 @@ git clone --depth=1 "$NXENGINE_REPO" nxengine-evo
 cd nxengine-evo
 
 echo "=== Building NXEngine-evo (Linux ${ARCH}) ==="
-cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPORTABLE=ON -Bbuild -H.
+cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DPORTABLE=ON \
+	-DCMAKE_INSTALL_PREFIX=/usr -Bbuild -H.
 ninja -C build
 
-echo "=== Packaging Linux dist ==="
-mkdir -p "$REPO_DIR/dist"
-OUTPUT_DIR="NXEngine-Evo"
-mkdir "$OUTPUT_DIR"
-cp build/nxengine-evo "$OUTPUT_DIR/"
-cp build/nxextract "$OUTPUT_DIR/"
-cp -r "$REPO_DIR/$DATA_DIR" "$OUTPUT_DIR/data"
-chmod +x "$OUTPUT_DIR/nxengine-evo" "$OUTPUT_DIR/nxextract"
+echo "=== Assembling AppDir ==="
+rm -rf AppDir
+DESTDIR=AppDir ninja -C build install
+rm -rf AppDir/usr/share/nxengine/data
+cp -r "$REPO_DIR/$DATA_DIR" AppDir/usr/bin/data
 
-ARCHIVE="$REPO_DIR/dist/NXEngine-Evo-${VERSION}-Linux-${ARCH}.tar.gz"
-tar czf "$ARCHIVE" "$OUTPUT_DIR"
+echo "=== Building AppImage (${ARCH}) ==="
+export APPIMAGE_EXTRACT_AND_RUN=1
+export ARCH="$ARCH"
+export OUTPUT="NXEngine-Evo-${VERSION}-Linux-${ARCH}.AppImage"
+export PATH="$(pwd):$PATH"
+
+LD="linuxdeploy-${ARCH}.AppImage"
+wget -q "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/${LD}" -O "$LD"
+chmod +x "$LD"
+wget -q "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-${ARCH}.AppImage" -O "linuxdeploy-plugin-appimage.AppImage"
+chmod +x "linuxdeploy-plugin-appimage.AppImage"
+
+"./$LD" --appdir AppDir --output appimage
+
+mkdir -p "$REPO_DIR/dist"
+cp "$OUTPUT" "$REPO_DIR/dist/"
 
 echo "=== Linux dist ready ==="
 ls -la "$REPO_DIR/dist"

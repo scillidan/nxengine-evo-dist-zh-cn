@@ -31,6 +31,8 @@ sed -i 's#\.open(widen(\([^)]*\))#.open(widen(\1).c_str()#g' \
 	src/sound/SoundManager.cpp src/tsc.cpp
 sed -i 's#ifstream ifs(widen(\([^)]*\))#ifstream ifs(widen(\1).c_str()#g' \
 	src/ResourceManager.cpp
+sed -i '/add_executable(nx ${SOURCES})/a IF(MINGW)\n  set_property(TARGET nx APPEND_STRING PROPERTY LINK_FLAGS " -mwindows")\nENDIF()' \
+	CMakeLists.txt
 
 echo "=== Building NXEngine-evo (Windows x64) ==="
 export SDL2DIR=/mingw64

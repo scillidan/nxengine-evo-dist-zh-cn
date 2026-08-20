@@ -8,6 +8,17 @@ REPO_DIR="$(pwd)"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
+copy_runtime_dlls() {
+	local exe="$1" dest="$2"
+	local dll
+	for dll in $(objdump -p "$exe" | sed -n 's/.*DLL Name: //p'); do
+		if [ -f "/mingw64/bin/$dll" ] && [ ! -e "$dest/$dll" ]; then
+			cp "/mingw64/bin/$dll" "$dest/$dll"
+			copy_runtime_dlls "/mingw64/bin/$dll" "$dest"
+		fi
+	done
+}
+
 cd "$WORK_DIR"
 
 echo "=== Cloning NXEngine-evo ==="
@@ -38,7 +49,8 @@ mkdir "$OUTPUT_DIR"
 cp build/nxengine-evo.exe "$OUTPUT_DIR/"
 cp build/nxextract.exe "$OUTPUT_DIR/"
 cp -r "$REPO_DIR/$DATA_DIR" "$OUTPUT_DIR/data"
-cp platform/win32/ext/runtime/x64/*.dll "$OUTPUT_DIR/"
+copy_runtime_dlls build/nxengine-evo.exe "$OUTPUT_DIR"
+copy_runtime_dlls build/nxextract.exe "$OUTPUT_DIR"
 
 echo "=== Windows dist staged ==="
 ls -la "$OUTPUT_DIR"
